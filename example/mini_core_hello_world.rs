@@ -138,6 +138,7 @@ fn main() {
         world as Box<SomeTrait>;
 
         assert_eq!(intrinsics::bitreverse(0b10101000u8), 0b00010101u8);
+        assert_eq!(intrinsics::bswap(0xffeeddccu32), 0xccddeeffu32);
 
         assert_eq!(intrinsics::size_of_val(hello) as u8, 6);
 
