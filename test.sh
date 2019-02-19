@@ -35,7 +35,8 @@ $RUSTC --sysroot ./build_sysroot/sysroot example/mod_bench.rs --crate-type bin
 #echo "[BUILD] sysroot in release mode"
 #./build_sysroot/build_sysroot.sh --release
 
-git clone https://github.com/rust-lang/rust.git
+git clone https://github.com/rust-lang/rust.git --depth=1
+rm Cargo.toml
 cd rust/src/tools/compiletest/
 cargo run -- --rustc-path=$(whereis rustc) --lldb-python=python --docck-python=python --src-base=$(pwd)/../../test --build-base=/tmp --stage-id=stage1 --mode=run-pass --cc=gcc --cxx=g++ --cflags=""
 
