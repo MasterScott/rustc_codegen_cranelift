@@ -248,7 +248,7 @@ fn trans_mono_item<'a, 'clif, 'tcx: 'a, B: Backend + 'static>(
             let _inst_guard =
                 PrintOnPanic(|| format!("{:?} {}", inst, tcx.symbol_name(inst).as_str()));
             debug_assert!(!inst.substs.needs_infer());
-            let _mir_guard = PrintOnPanic(|| {
+            /*let _mir_guard = PrintOnPanic(|| {
                 match inst.def {
                     InstanceDef::Item(_)
                     | InstanceDef::DropGlue(_, _)
@@ -269,7 +269,7 @@ fn trans_mono_item<'a, 'clif, 'tcx: 'a, B: Backend + 'static>(
                         format!("{:#?}", tcx.instance_mir(inst.def))
                     }
                 }
-            });
+            });*/
 
             crate::base::trans_fn(cx, inst, linkage);
         }
