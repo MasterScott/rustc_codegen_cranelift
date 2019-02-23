@@ -164,12 +164,12 @@ impl CodegenBackend for CraneliftCodegenBackend {
         }
         match sess.lto() {
             Lto::Fat | Lto::Thin | Lto::ThinLocal => {
-                sess.warn("Rustc codegen cranelift doesn't support lto");
+                //sess.warn("Rustc codegen cranelift doesn't support lto");
             }
             Lto::No => {}
         }
         if sess.opts.cg.rpath {
-            sess.err("rpath is not yet supported");
+            //sess.err("rpath is not yet supported");
         }
         if sess.opts.debugging_opts.pgo_gen.enabled() {
             sess.err("pgo is not supported");
