@@ -136,6 +136,7 @@ fn build_vtable<'a, 'tcx: 'a>(
             &format!("vtable.{:?}.for.{:?}", trait_ref, ty),
             Linkage::Local,
             false,
+            None,
         )
         .unwrap();
     fx.module.define_data(data_id, &data_ctx).unwrap();

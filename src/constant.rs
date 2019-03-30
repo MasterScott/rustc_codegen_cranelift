@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use rustc::mir::interpret::{
     read_target_uint, AllocId, AllocKind, Allocation, ConstValue, EvalResult, GlobalId, Scalar,
 };
-use rustc::ty::Const;
+use rustc::ty::{Const, layout::Align};
 use rustc_mir::interpret::{
     InterpretCx, ImmTy, MPlaceTy, Machine, Memory, MemoryKind, OpTy, PlaceTy, Pointer,
     StackPopCleanup,
@@ -173,13 +173,13 @@ fn trans_const_place<'a, 'tcx: 'a>(
     //println!("const value: {:?} allocation: {:?}", value, alloc);
     let alloc_id = fx.tcx.alloc_map.lock().allocate(alloc);
     fx.constants.todo.insert(TodoItem::Alloc(alloc_id));
-    let data_id = data_id_for_alloc_id(fx.module, alloc_id);
+    let data_id = data_id_for_alloc_id(fx.module, alloc_id, alloc.align);
     cplace_for_dataid(fx, const_.ty, data_id)
 }
 
-fn data_id_for_alloc_id<B: Backend>(module: &mut Module<B>, alloc_id: AllocId) -> DataId {
+fn data_id_for_alloc_id<B: Backend>(module: &mut Module<B>, alloc_id: AllocId, align: Align) -> DataId {
     module
-        .declare_data(&format!("__alloc_{}", alloc_id.0), Linkage::Local, false)
+        .declare_data(&format!("__alloc_{}", alloc_id.0), Linkage::Local, false, Some(align.bytes() as u8))
         .unwrap()
 }
 
@@ -190,15 +190,15 @@ fn data_id_for_static<'a, 'tcx: 'a, B: Backend>(
     linkage: Linkage,
 ) -> DataId {
     let symbol_name = tcx.symbol_name(Instance::mono(tcx, def_id)).as_str();
+    let ty = tcx.type_of(def_id);
     let is_mutable = if let ::rustc::hir::Mutability::MutMutable = tcx.is_static(def_id).unwrap() {
         true
     } else {
-        !tcx.type_of(def_id)
-            .is_freeze(tcx, ParamEnv::reveal_all(), DUMMY_SP)
+        !ty.is_freeze(tcx, ParamEnv::reveal_all(), DUMMY_SP)
     };
 
     let data_id = module
-        .declare_data(&*symbol_name, linkage, is_mutable)
+        .declare_data(&*symbol_name, linkage, is_mutable, Some(tcx.layout_of(ParamEnv::reveal_all().and(ty)).unwrap().align.pref.bytes() as u8))
         .unwrap();
 
     if linkage == Linkage::Preemptible {
@@ -247,8 +247,8 @@ fn define_all_allocs<'a, 'tcx: 'a, B: Backend + 'a>(
         let (data_id, alloc) = match todo_item {
             TodoItem::Alloc(alloc_id) => {
                 //println!("alloc_id {}", alloc_id);
-                let data_id = data_id_for_alloc_id(module, alloc_id);
                 let alloc = memory.get(alloc_id).unwrap();
+                let data_id = data_id_for_alloc_id(module, alloc_id, alloc.align);
                 (data_id, alloc)
             }
             TodoItem::Static(def_id) => {
@@ -304,7 +304,7 @@ fn define_all_allocs<'a, 'tcx: 'a, B: Backend + 'a>(
                 }
                 AllocKind::Memory(_) => {
                     cx.todo.insert(TodoItem::Alloc(reloc));
-                    data_id_for_alloc_id(module, reloc)
+                    data_id_for_alloc_id(module, reloc, alloc.align)
                 }
                 AllocKind::Static(def_id) => {
                     cx.todo.insert(TodoItem::Static(def_id));
