@@ -131,8 +131,10 @@ fn trans_fn<'a, 'clif, 'tcx: 'a, B: Backend + 'static>(
             fx.bcx.seal_all_blocks();
             fx.bcx.finalize();
 
+
             // Step 2b3. Define function
             cx.caches.context.func = func;
+            if std::env::var("PREOPT").is_ok() { cranelift_preopt::optimize(&mut cx.caches.context, cx.module.isa()).unwrap(); }
             cx.module
                 .define_function(func_id, &mut cx.caches.context)
                 .unwrap();
