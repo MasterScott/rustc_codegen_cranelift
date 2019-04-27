@@ -32,3 +32,16 @@ fi
 
 # Copy files to sysroot
 cp target/$TARGET_TRIPLE/$channel/deps/*.rlib sysroot/lib/rustlib/$TARGET_TRIPLE/lib/
+
+exit 0 # FIXME libtest doesn't compile yet
+
+if [[ "$1" == "--release" ]]; then
+    channel='release'
+    RUSTFLAGS="$RUSTFLAGS -Zmir-opt-level=3" cargo build --target $TARGET_TRIPLE --release --manifest-path ./sysroot_src/src/libtest/Cargo.toml
+else
+    channel='debug'
+    cargo build --target $TARGET_TRIPLE --manifest-path ./sysroot_src/src/libtest/Cargo.toml
+fi
+
+# Copy files to sysroot
+cp target/$TARGET_TRIPLE/$channel/deps/*.rlib sysroot/lib/rustlib/$TARGET_TRIPLE/lib/
