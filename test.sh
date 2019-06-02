@@ -48,10 +48,8 @@ rustc = "$(echo ~/.rustup/toolchains/nightly-x86_64-*/bin/rustc)"
 EOF
 
 rm -r src/test/run-pass/{asm-*,abi-*,extern/,panic-runtime/,panics/,unsized-locals/,proc-macro/,threads-sendsync/,thinlto/,simd/} || true
-for test in src/test/run-pass/*.rs src/test/run-pass/**/*.rs; do
-    if grep "ignore-emscripten" $test 2>&1 >/dev/null; then
-        rm $test
-    fi
+for test in $(rg --files-with-matches "ignore-emscripten" src/test/run-pass); do
+    rm $test
 done
 
 echo "[TEST] run-pass"
