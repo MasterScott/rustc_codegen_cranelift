@@ -199,7 +199,7 @@ fn data_id_for_static<'a, 'tcx: 'a, B: Backend>(
     let align = tcx.layout_of(ParamEnv::reveal_all().and(ty)).unwrap().align.pref.bytes();
 
     let data_id = module
-        .declare_data(&*symbol_name, linkage, is_mutable, Some(align.try_into().unwrap()))
+        .declare_data(&*symbol_name, linkage, is_mutable, None)
         .unwrap();
 
     if linkage == Linkage::Preemptible {
@@ -249,8 +249,7 @@ fn define_all_allocs<'a, 'tcx: 'a, B: Backend + 'a>(
             TodoItem::Alloc(alloc_id) => {
                 //println!("alloc_id {}", alloc_id);
                 let alloc = memory.get(alloc_id).unwrap();
-                let align = alloc.align.bytes().try_into().unwrap();
-                let data_id = data_id_for_alloc_id(module, alloc_id, Some(align));
+                let data_id = data_id_for_alloc_id(module, alloc_id, None);
                 (data_id, alloc)
             }
             TodoItem::Static(def_id) => {

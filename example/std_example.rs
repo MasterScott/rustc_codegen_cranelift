@@ -23,7 +23,7 @@ fn main() {
     unsafe {
         let ptr = &[0u64] as &[u64] as *const [u64] as *const u64;
         println!("{:p}", ptr);
-        std::slice::from_raw_parts(ptr, 1);
+        //std::slice::from_raw_parts(ptr, 1);
     }
 }
 
