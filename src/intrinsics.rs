@@ -402,10 +402,26 @@ pub fn codegen_intrinsic_call<'a, 'tcx: 'a>(
             ret.write_cvalue(fx, res);
         };
         bswap, <T> (v arg) {
+            // FIXME(CraneStation/cranelift#794) add bswap instruction to cranelift
             fn swap(bcx: &mut FunctionBuilder, v: Value) -> Value {
                 match bcx.func.dfg.value_type(v) {
                     types::I8 => v,
                     types::I16 => bcx.ins().rotl_imm(v, 8),
+                    types::I32 => {
+                        // FIXME make isplit and iconcat support i16 <-> i32
+                        let l = bcx.ins().band_imm(v, 0xffff_0000);
+                        let l = bcx.ins().rotr_imm(l, 16);
+                        let l = bcx.ins().ireduce(types::I16, l);
+                        let l = swap(bcx, l);
+                        let l = bcx.ins().uextend(types::I32, l);
+
+                        let r = bcx.ins().band_imm(v, 0x0000_ffff);
+                        let r = bcx.ins().ireduce(types::I16, r);
+                        let r = swap(bcx, r);
+                        let r = bcx.ins().uextend(types::I32, r);
+                        let r = bcx.ins().rotl_imm(r, 16);
+                        bcx.ins().bor(l, r)
+                    }
                     _ => {
                         let (begin, end) = bcx.ins().isplit(v);
                         let begin = swap(bcx, begin);
